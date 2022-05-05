@@ -46,8 +46,8 @@ def load_ui_type(uifile):
 
         # Fetch the base_class and form class based on their type in
         # the xml from designer
-        form_class = frame['Ui_%s' % form_class]
-        base_class = eval('QtWidgets.%s' % widget_class)
+        form_class = frame[f'Ui_{form_class}']
+        base_class = eval(f'QtWidgets.{widget_class}')
     return form_class, base_class
 
 
@@ -103,7 +103,7 @@ def load_ui_wrapper(uifile, base_instance=None):
     if 'PySide' in __binding__:
         return pyside_load_ui(uifile, base_instance)
     elif 'PyQt' in __binding__:
-        uic = __import__(__binding__ + ".uic").uic
+        uic = __import__(f"{__binding__}.uic").uic
         return uic.loadUi(uifile, base_instance)
 
 

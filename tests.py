@@ -31,10 +31,10 @@ def _pyside2_commit_date():
     import PySide2
     if hasattr(PySide2, '__build_commit_date__'):
         commit_date = PySide2.__build_commit_date__
-        datetime_object = datetime.datetime.strptime(
+        return datetime.datetime.strptime(
             commit_date[: commit_date.rfind('+')], '%Y-%m-%dT%H:%M:%S'
         )
-        return datetime_object
+
     else:
         # Returns None if no __build_commit_date__ is available
         return None
@@ -712,7 +712,7 @@ def test_membership():
         common_members.pop('QtOpenGL', None)
         common_members.pop('QtMultimedia', None)
 
-    missing = list()
+    missing = []
     for module, members in common_members.items():
         missing.extend(
             member for member in members

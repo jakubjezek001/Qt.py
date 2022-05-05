@@ -19,14 +19,12 @@ def setup_ui(uifile, base_instance=None):
 
     """
     ui = QtCompat.loadUi(uifile)  # Qt.py mapped function
-    if not base_instance:
-        return ui
-    else:
+    if base_instance:
         for member in dir(ui):
             if not member.startswith('__') and \
                member is not 'staticMetaObject':
                 setattr(base_instance, member, getattr(ui, member))
-        return ui
+    return ui
 
 
 class MainWindow(QtWidgets.QWidget):

@@ -22,9 +22,6 @@ def test():
             "applied correctly."
         )
 
-        # Suppress "Qt.QtCore" imported but unused warning
-        QtCore
-
     # Test _misplaced_members is applied correctly
     from Qt import QtGui
     assert QtGui.QColorTest == QtGui.QColor, (
@@ -43,7 +40,7 @@ def test():
         "Non-decorated function was added to QtCompat.QWidget"
     )
     # Verify that our decorated remapping of QWidget.windowTitle works
-    check = "Test: {}".format(title)
+    check = f"Test: {title}"
     assert QtCompat.QWidget.windowTitleDecorator(wid) == check, (
         "Decorated method was not added to QtCompat.QWidget"
     )
@@ -52,7 +49,7 @@ def test():
     # different than the QWidget version.
     win = QtWidgets.QMainWindow()
     win.setWindowTitle(title)
-    check = "QMainWindow Test: {}".format(title)
+    check = f"QMainWindow Test: {title}"
     assert QtCompat.QMainWindow.windowTitleDecorator(win) == check, (
         "Decorated method was added to QtCompat.QMainWindow"
     )

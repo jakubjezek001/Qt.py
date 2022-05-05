@@ -11,7 +11,7 @@ def parse(fname):
 
     """
 
-    blocks = list()
+    blocks = []
     with io.open(fname, "r", encoding="utf-8") as f:
         in_block = False
         current_block = None
@@ -32,11 +32,10 @@ def parse(fname):
 
             if line.startswith("```python"):
                 in_block = True
-                current_block = list()
-                current_block.append(current_header)
+                current_block = [current_header]
                 blocks.append(current_block)
 
-    tests = list()
+    tests = []
     for block in blocks:
         header = (
             block[0].strip("# ")  # Remove Markdown
@@ -90,31 +89,30 @@ def format_(blocks):
 
     """
 
-    tests = list()
+    tests = []
     function_count = 0  # For each test to have a unique name
 
     for block in blocks:
 
         # Validate docstring format of body
-        if not any(line[:3] == ">>>" for line in block["body"]):
+        if all(line[:3] != ">>>" for line in block["body"]):
             # A doctest requires at least one `>>>` directive.
             block["body"].insert(0, ">>> assert False, "
                                  "'Body must be in docstring format'\n")
 
         # Validate binding on first line
-        if not block["binding"] in ("PySide", "PySide2", "PyQt5", "PyQt4"):
+        if block["binding"] not in ("PySide", "PySide2", "PyQt5", "PyQt4"):
             block["body"].insert(0, ">>> assert False, "
                                  "'Invalid binding'\n")
 
         if sys.version_info > (3, 4) and block["binding"] in ("PySide"):
             # Skip caveat test if it requires PySide on Python > 3.4
             continue
-        else:
-            function_count += 1
-            block["header"] = block["header"]
-            block["count"] = str(function_count)
-            block["body"] = "    ".join(block["body"])
-            tests.append("""\
+        function_count += 1
+        block["header"] = block["header"]
+        block["count"] = str(function_count)
+        block["body"] = "    ".join(block["body"])
+        tests.append("""\
 
 def test_{count}_{header}():
     '''Test {header}
