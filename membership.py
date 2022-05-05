@@ -36,26 +36,24 @@ def write_json(dictionary, filename):
     """Write dictionary to JSON"""
     with open(filename, 'w') as data_file:
         json.dump(dictionary, data_file, indent=4, sort_keys=True)
-    print('--> Wrote ' + os.path.basename(filename))
+    print(f'--> Wrote {os.path.basename(filename)}')
 
 
 def compare(dicts):
     """Compare by iteration"""
 
-    common_members = {}
     common_keys = reduce(lambda x, y: x & y, map(dict.keys, dicts))
-    for k in common_keys:
-        common_members[k] = list(
-            reduce(lambda x, y: x & y, [set(d[k]) for d in dicts]))
-
-    return common_members
+    return {
+        k: list(reduce(lambda x, y: x & y, [set(d[k]) for d in dicts]))
+        for k in common_keys
+    }
 
 
 def copy_qtgui_to_modules():
     """Copies the QtGui list of PySide/PyQt4 into QtWidgets"""
 
-    pyside_filepath = PREFIX + '/PySide.json'
-    pyqt4_filepath = PREFIX + '/PyQt4.json'
+    pyside_filepath = f'{PREFIX}/PySide.json'
+    pyqt4_filepath = f'{PREFIX}/PyQt4.json'
     pyside = read_json(pyside_filepath)
     pyqt4 = read_json(pyqt4_filepath)
 
@@ -77,21 +75,19 @@ def copy_qtgui_to_modules():
 def sort_common_members():
     """Sorts the keys and members"""
 
-    filename = PREFIX + '/common_members.json'
-    sorted_json_data = {}
+    filename = f'{PREFIX}/common_members.json'
     json_data = read_json(filename)
 
-    all_keys = []
-    for key, value in json_data.items():
-        all_keys.append(key)
+    all_keys = [key for key, value in json_data.items()]
     sorted_keys = sorted(all_keys)
 
-    for key in sorted_keys:
-        if len(json_data[key]) > 0:
-            # Only add modules which have common members
-            sorted_json_data[key] = sorted(json_data[key])
+    sorted_json_data = {
+        key: sorted(json_data[key])
+        for key in sorted_keys
+        if len(json_data[key]) > 0
+    }
 
-    print('--> Sorted/cleaned ' + os.path.basename(filename))
+    print(f'--> Sorted/cleaned {os.path.basename(filename)}')
 
     write_json(sorted_json_data, filename)
 
@@ -99,14 +95,14 @@ def sort_common_members():
 def generate_common_members():
     """Generate JSON with commonly shared members"""
 
-    pyside = read_json(PREFIX + '/PySide.json')
-    pyside2 = read_json(PREFIX + '/PySide2.json')
-    pyqt4 = read_json(PREFIX + '/PyQt4.json')
-    pyqt5 = read_json(PREFIX + '/PyQt5.json')
+    pyside = read_json(f'{PREFIX}/PySide.json')
+    pyside2 = read_json(f'{PREFIX}/PySide2.json')
+    pyqt4 = read_json(f'{PREFIX}/PyQt4.json')
+    pyqt5 = read_json(f'{PREFIX}/PyQt5.json')
 
     dicts = [pyside, pyside2, pyqt4, pyqt5]
     common_members = compare(dicts)
-    write_json(common_members, PREFIX + '/common_members.json')
+    write_json(common_members, f'{PREFIX}/common_members.json')
 
 
 if __name__ == '__main__':
@@ -144,19 +140,15 @@ if __name__ == '__main__':
         # Import <binding>
         binding = __import__(options.binding)
 
-        for importer, modname, ispkg in pkgutil.walk_packages(
-                path=binding.__path__,
-                prefix=binding.__name__ + '.',
-                onerror=lambda x: None):
+        for importer, modname, ispkg in pkgutil.walk_packages(path=binding.__path__, prefix=f'{binding.__name__}.', onerror=lambda x: None):
             if modname not in SKIP_MODULES:
                 MODULES.append(modname)
                 basemodule = modname[:modname.rfind('.')]
                 submodule = modname[modname.rfind('.')+1:]
                 try:
-                    import_statement = (
-                        'from ' + basemodule + ' import ' + submodule)
+                    import_statement = f'from {basemodule} import {submodule}'
                     exec(import_statement)
-                    # print(import_statement)
+                                    # print(import_statement)
                 except (ImportError, AttributeError, SyntaxError) as error:
                     # SyntaxError catched here because e.g. _port3
                     # running on Python 2...
@@ -164,18 +156,16 @@ if __name__ == '__main__':
 
                 try:
                     raw_members = []  # avoid Hound errors
-                    exec('raw_members = dir(' + submodule + ')')
+                    exec(f'raw_members = dir({submodule})')
                     members = []
                     for member in raw_members:
                         if member not in SKIP_MEMBERS and \
                                 not member.startswith('_'):
                             try:
-                                import_statement = (
-                                    'from ' + basemodule + '.' + submodule +
-                                    ' import ' + member)
+                                import_statement = ((f'from {basemodule}.{submodule}' + ' import ') + member)
                                 exec(import_statement)
                                 # print(import_statement)
-                                MODULES.append(modname + '.' + member)
+                                MODULES.append(f'{modname}.{member}')
                             except (AttributeError, SyntaxError) as error:
                                 # SyntaxError catched here because e.g. _port3
                                 # running on Python 2...
@@ -205,14 +195,15 @@ if __name__ == '__main__':
                 pass
 
         # Sort and remove duplicates
-        sorted_members = {}
-        for key, value in members.copy().items():
-            sorted_members[key] = sorted(list(set(value)))
+        sorted_members = {
+            key: sorted(list(set(value)))
+            for key, value in members.copy().items()
+        }
 
         if QT_VERBOSE:
             # Debug
             pprint(sorted_members)
 
         # Write to disk
-        filepath = PREFIX + '/' + binding.__name__ + '.json'
+        filepath = f'{PREFIX}/{binding.__name__}.json'
         write_json(sorted_members, filepath)

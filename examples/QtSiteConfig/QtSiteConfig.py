@@ -66,7 +66,7 @@ def update_compatibility_decorators(binding, decorators):
             ret = some_function(*args, **kwargs)
             # Modifies the returned value so we can test that the
             # decorator works.
-            return "Test: {}".format(ret)
+            return f"Test: {ret}"
         # preserve docstring and name of original function
         wrapper.__doc__ = some_function.__doc__
         wrapper.__name__ = some_function.__name__
@@ -78,7 +78,7 @@ def update_compatibility_decorators(binding, decorators):
             ret = some_function(*args, **kwargs)
             # Modifies the returned value so we can test that the
             # decorator works.
-            return "QMainWindow Test: {}".format(ret)
+            return f"QMainWindow Test: {ret}"
         # preserve docstring and name of original function
         wrapper.__doc__ = some_function.__doc__
         wrapper.__name__ = some_function.__name__
